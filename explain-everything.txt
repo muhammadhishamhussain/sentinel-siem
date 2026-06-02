@@ -1,0 +1,348 @@
+================================================================================
+SENTINEL SIEM — EXPLAIN EVERYTHING (MASTER DOCUMENT)
+================================================================================
+
+This file is the complete end-to-end explanation of the project in one place.
+For focused topics, see the docs/ folder (17 numbered .txt files).
+
+Last updated: May 2026
+Live URL: https://sentinel-backend-production-d547.up.railway.app
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+  1. What is this project?
+  2. What you can demonstrate live
+  3. Technology stack
+  4. Architecture end-to-end
+  5. All application pages
+  6. Backend API summary
+  7. Database tables and data lifecycle
+  8. Threat intelligence feeds
+  9. AI integration
+  10. What is real vs simulated
+  11. Environment variables
+  12. How to run locally
+  13. How to deploy on Railway
+  14. File structure
+  15. Presentation script
+  16. Testing
+  17. Troubleshooting
+  18. Document index
+
+================================================================================
+1. WHAT IS THIS PROJECT?
+================================================================================
+
+SENTINEL SIEM is a full-stack Security Operations Center (SOC) dashboard.
+
+It started as a frontend-only demo with fake JSON data and became a production-
+deployed application that:
+
+  - Ingests real threat intelligence (ThreatFox, FeodoTracker, CISA KEV)
+  - Stores IOCs, security events, and logs in PostgreSQL
+  - Serves a React dashboard with charts, maps, and live WebSocket updates
+  - Provides incident workflow, log search, threat intel browser, and reports
+  - Uses Ollama Cloud AI to explain events, IOCs, incidents, and summaries
+
+It is suitable for academic presentation, portfolio review, and technical
+interviews when you explain both strengths and demo limitations honestly.
+
+================================================================================
+2. WHAT YOU CAN DEMONSTRATE LIVE
+================================================================================
+
+  [x] Live KPI metrics from database
+  [x] Global attack map with country-based sources
+  [x] Real-time security event stream (WebSocket)
+  [x] Expandable events with MITRE ATT&CK and recommended actions
+  [x] AI explain buttons (with OLLAMA_API_KEY on server)
+  [x] Threat intel IOC table from real feeds
+  [x] Manual "Enrich Feed" sync with toast feedback
+  [x] Log search across hundreds of enriched log lines
+  [x] Incidents from API + create/advance drill workflow
+  [x] Reports with live + Sample-labeled sections
+  [x] Mobile-responsive navigation and layouts
+  [x] Settings: refresh interval, table density
+  [x] Dark/light theme
+
+================================================================================
+3. TECHNOLOGY STACK
+================================================================================
+
+FRONTEND
+  React 18, TypeScript, Vite 5
+  Tailwind CSS, shadcn/ui (Radix primitives)
+  TanStack React Query (server state)
+  React Router 6
+  Recharts (timeline, donut)
+  Framer Motion (animations)
+  Sonner (toasts)
+
+BACKEND
+  Node.js 20, Express 4
+  ws (WebSocket)
+  node-cron (scheduled feed sync, metrics broadcast)
+  pg (PostgreSQL client)
+
+DATA / AI
+  PostgreSQL (Railway)
+  ThreatFox, FeodoTracker, CISA KEV (HTTP, no keys)
+  Ollama Cloud API — model gemma3:12b
+
+DEPLOY
+  Railway single service
+  Build: npm run build (Vite + backend npm install)
+  Start: npm start → node backend/src/index.mjs
+
+================================================================================
+4. ARCHITECTURE END-TO-END
+================================================================================
+
+                    ┌─────────────────────────────────────┐
+                    │           USER BROWSER              │
+                    │  React SPA (dist/)                  │
+                    │  - TanStack Query → REST /api/*     │
+                    │  - WebSocket → /ws                  │
+                    └──────────────┬──────────────────────┘
+                                   │ HTTPS
+                    ┌──────────────▼──────────────────────┐
+                    │   Node.js (backend/src/index.mjs)   │
+                    │   - Express REST                    │
+                    │   - WebSocketServer /ws             │
+                    │   - express.static(dist)            │
+                    │   - 15s event loop                  │
+                    │   - cron: feeds 2h, metrics 3min    │
+                    └──────────────┬──────────────────────┘
+                                   │
+              ┌────────────────────┼────────────────────┐
+              ▼                    ▼                    ▼
+        PostgreSQL          ThreatFox API         Ollama Cloud
+        (iocs, events,      FeodoTracker          /v1/chat/completions
+         logs)               CISA KEV JSON
+
+REQUEST PATH — Dashboard page load:
+  1. Browser GET /
+  2. Server returns dist/index.html
+  3. React loads, GET /api/dashboard
+  4. Server queries PostgreSQL, returns JSON
+  5. React renders metrics, charts, events
+  6. WebSocket connects to /ws
+  7. Every 15s server inserts new event, pushes { type: "event" }
+
+================================================================================
+5. ALL APPLICATION PAGES
+================================================================================
+
+/  DASHBOARD
+   AI summary, 4 metric cards, attack map, timeline, severity donut,
+   live events table, system status, attack sources list.
+
+/incidents  INCIDENT MANAGEMENT
+   API incidents from critical/high events + local drill incidents.
+   Assign, advance status, timeline, AI explain.
+
+/log-search  LOG INVESTIGATION
+   Search, regex, filters, export. Query param ?q= from header.
+
+/threat-intel  IOC INTELLIGENCE
+   Indicators, campaigns, filters, Enrich Feed sync, AI explain.
+
+/reports  EXECUTIVE REPORTS
+   Live metrics + Sample compliance/SLA sections + AI narrative.
+
+================================================================================
+6. BACKEND API SUMMARY
+================================================================================
+
+GET  /api/health
+GET  /api/dashboard
+GET  /api/events?limit=
+GET  /api/incidents
+GET  /api/logs/search?q=&level=&source=
+GET  /api/threat-intel
+GET  /api/alerts
+POST /api/feeds/sync
+POST /api/ai/explain   body: { type, context }
+
+WS   /ws
+     Messages: connected, event, alert, metrics
+
+Full details: docs/04-API-REFERENCE.txt
+
+================================================================================
+7. DATABASE TABLES AND DATA LIFECYCLE
+================================================================================
+
+iocs            — from feed sync (ThreatFox, Feodo, CISA)
+security_events — from generator every 15s + seeds
+logs            — from generator per event
+feed_syncs      — ingestion audit
+
+Events reference real IOC malware families and CVEs in titles/details.
+Incidents API does NOT use a separate table — maps from security_events.
+
+Full details: docs/05-DATABASE-AND-DATA-FLOWS.txt
+
+================================================================================
+8. THREAT INTELLIGENCE FEEDS
+================================================================================
+
+ThreatFox     — malware IOCs (IP, domain, hash, URL)
+FeodoTracker  — botnet C2 IPs with geo
+CISA KEV      — CVE identifiers (shown as CVE badge in UI)
+
+Sync: every 2 hours automatic + manual Enrich Feed button.
+
+Full details: docs/06-THREAT-INTELLIGENCE-FEEDS.txt
+
+================================================================================
+9. AI INTEGRATION
+================================================================================
+
+Provider: Ollama Cloud
+URL:      https://ollama.com/v1/chat/completions
+Model:    gemma3:12b
+Env:      OLLAMA_API_KEY (server only)
+
+Types: event | incident | ioc | summary
+
+UI: Explain buttons, dashboard AI summary, reports narrative.
+
+Full details: docs/07-AI-INTEGRATION.txt
+
+================================================================================
+10. WHAT IS REAL VS SIMULATED
+================================================================================
+
+REAL: IOCs, events, logs, metrics, charts, WS stream, feed sync, API incidents
+      (derived), AI when key set.
+
+SIMULATED / LOCAL: Drill incidents, alert ack storage, settings, Sample report
+                   sections, system status cards, template MITRE/actions.
+
+Full matrix: docs/11-LIVE-VS-DEMO-DATA.txt
+
+================================================================================
+11. ENVIRONMENT VARIABLES
+================================================================================
+
+DATABASE_URL      Required — PostgreSQL
+OLLAMA_API_KEY    Optional — AI features
+ALLOWED_ORIGINS   Optional — CORS (* for unified deploy)
+PORT              Auto on Railway
+
+VITE_API_URL, VITE_WS_URL — only for split deploy (not used in unified mode)
+
+Browser: sentinel-settings, sentinel-acknowledged-alerts in localStorage
+
+Full details: docs/08-ENVIRONMENT-AND-CONFIGURATION.txt
+
+================================================================================
+12. HOW TO RUN LOCALLY
+================================================================================
+
+  cp .env.example .env
+  # set DATABASE_URL, optional OLLAMA_API_KEY
+
+  cd backend && npm install && npm run dev   # terminal 1
+  npm install && npm run dev                 # terminal 2
+  # open http://localhost:5173
+
+Full details: docs/09-LOCAL-DEVELOPMENT.txt
+
+================================================================================
+13. HOW TO DEPLOY ON RAILWAY
+================================================================================
+
+  npm run build
+  railway login && railway link
+  railway up --detach
+
+  Set OLLAMA_API_KEY in Railway variables.
+  Link PostgreSQL plugin for DATABASE_URL.
+
+  Verify: curl https://<host>/api/health
+
+Full details: docs/10-DEPLOYMENT-RAILWAY.txt
+
+================================================================================
+14. FILE STRUCTURE
+================================================================================
+
+Key paths:
+  backend/src/index.mjs     — API + WS + static + AI
+  backend/src/feeds.mjs     — threat feed ingestion
+  backend/src/generator.mjs — events, logs, aggregations
+  src/pages/*.tsx           — main screens
+  src/components/siem/*     — SOC widgets
+  src/lib/sentinel-api.ts   — API client
+
+Full tree: docs/12-FILE-STRUCTURE.txt
+
+================================================================================
+15. PRESENTATION SCRIPT
+================================================================================
+
+Opening:
+  "SENTINEL is a live SOC dashboard on Railway pulling real threat intelligence."
+
+Demo order:
+  Dashboard → Threat Intel (Enrich Feed) → Log Search → Incidents → Reports
+
+Closing:
+  "Real feeds and PostgreSQL power detection data; drills and sample report
+   sections are labeled for workflow demonstration."
+
+Full script: docs/13-EXTERNAL-PRESENTATION-GUIDE.txt
+
+================================================================================
+16. TESTING
+================================================================================
+
+  npm test     — 4 Vitest presentation tests (all pass)
+  npm run build — must succeed before deploy
+
+Details: docs/14-TESTING-AND-QUALITY.txt
+
+================================================================================
+17. TROUBLESHOOTING
+================================================================================
+
+White screen → redeploy unified build, no lazy chunks
+503 AI → set OLLAMA_API_KEY
+Backend unavailable → check DATABASE_URL and railway logs
+WS offline → check /ws and firewall
+
+Full list: docs/15-TROUBLESHOOTING.txt
+
+================================================================================
+18. DOCUMENT INDEX (docs/ folder)
+================================================================================
+
+  docs/00-READ-ME-FIRST.txt
+  docs/01-PROJECT-OVERVIEW.txt
+  docs/02-ARCHITECTURE-END-TO-END.txt
+  docs/03-FEATURES-AND-PAGES.txt
+  docs/04-API-REFERENCE.txt
+  docs/05-DATABASE-AND-DATA-FLOWS.txt
+  docs/06-THREAT-INTELLIGENCE-FEEDS.txt
+  docs/07-AI-INTEGRATION.txt
+  docs/08-ENVIRONMENT-AND-CONFIGURATION.txt
+  docs/09-LOCAL-DEVELOPMENT.txt
+  docs/10-DEPLOYMENT-RAILWAY.txt
+  docs/11-LIVE-VS-DEMO-DATA.txt
+  docs/12-FILE-STRUCTURE.txt
+  docs/13-EXTERNAL-PRESENTATION-GUIDE.txt
+  docs/14-TESTING-AND-QUALITY.txt
+  docs/15-TROUBLESHOOTING.txt
+  docs/16-BUILD-HISTORY-AND-PROGRESS.txt
+
+Also in repo:
+  PROGRESS.txt      — detailed May 17 build session log
+  DEPLOYMENT.md     — markdown deploy guide
+  .env.example      — environment template
+
+================================================================================
+END OF EXPLAIN-EVERYTHING.txt
+================================================================================

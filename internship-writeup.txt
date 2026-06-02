@@ -1,0 +1,193 @@
+INTERNSHIP PROJECT WRITEUP
+==========================
+Project: SENTINEL SIEM Dashboard
+Prepared for: Academic/Examination Submission
+
+
+1. INTERNSHIP DOMAIN
+--------------------
+Cybersecurity | Information Security | Security Operations (SOC)
+
+The internship was conducted in the domain of cybersecurity, specifically
+focused on Security Operations Center (SOC) tooling and Security Information
+and Event Management (SIEM) systems. This domain involves monitoring,
+detecting, analyzing, and responding to security threats and incidents in
+real time within enterprise-level networks.
+
+
+2. PROJECT UNDERTAKEN / COMPLETED
+-----------------------------------
+Project Title:
+SENTINEL - A SIEM Dashboard for Security Operations Center (SOC)
+
+Project Overview:
+SENTINEL is a frontend-complete, presentation-ready SIEM dashboard
+prototype designed to simulate the core workflows used by security analysts
+in a modern SOC environment. The project demonstrates real-time threat
+monitoring, incident response management, log investigation, and threat
+intelligence correlation — key functions of any enterprise SIEM platform.
+
+The application consists of four functional modules:
+
+  a) SOC Dashboard — Real-time monitoring with live event simulation,
+     global attack map, threat timeline charts, severity distribution,
+     and system health status panels.
+
+  b) Incident Response — A complete incident lifecycle management system
+     supporting analyst assignment, status workflow (New → Triaged →
+     In Progress → Containment → Eradication → Recovery → Closed),
+     and timestamped activity timelines.
+
+  c) Log Search — An investigation workspace for searching, filtering,
+     and exporting system logs using keyword or regex queries, with
+     CSV and JSON export capabilities.
+
+  d) Threat Intelligence — An IOC (Indicator of Compromise) management
+     module for reviewing malicious indicators, threat campaigns, actor
+     attribution, MITRE technique mappings, and enrichment status.
+
+Project Status:
+The frontend is 90-95% complete and fully presentation-ready. The backend
+is simulated using a typed mock API adapter, with all data boundaries
+prepared for future real backend integration.
+
+
+3. ROLES AND RESPONSIBILITIES
+-------------------------------
+As the developer on this project, the following responsibilities were undertaken:
+
+  - Designed and implemented the complete multi-page React application
+    architecture with React Router (Dashboard, Incidents, Log Search,
+    Threat Intel, 404 fallback)
+
+  - Built the SOC Dashboard including: metric cards, canvas-based global
+    attack map with animated attack paths, recharts-based threat timeline
+    and severity donut chart, filterable and expandable security events
+    table, system health panel, and top attack origins widget
+
+  - Implemented the real-time event simulation engine using a custom React
+    hook (useEventSimulation) that generates deterministic security events
+    for live demo purposes
+
+  - Integrated MITRE ATT&CK framework mappings to each security event,
+    providing tactic/technique identification and recommended analyst
+    response actions
+
+  - Developed the Incident Response page including full workflow state
+    management, analyst assignment, status progression with automatic
+    timeline logging, and localStorage-backed persistence
+
+  - Built the Log Search module with keyword/regex search, query
+    highlighting, severity and source filtering, result limiting for
+    performance, and CSV/JSON export functionality
+
+  - Created the Threat Intelligence page with IOC list, IOC detail panel,
+    campaign tracking cards, enrichment simulation, and multi-field filtering
+
+  - Implemented the notification system with a dismissible alert dropdown,
+    per-alert acknowledgement, acknowledge-all functionality, and badge count
+
+  - Set up the project's quality infrastructure: ESLint, TypeScript strict
+    mode, Vitest unit tests, Playwright browser verification tests, and
+    Vite production build with chunk optimization
+
+  - Wrote meaningful unit tests covering dashboard rendering, event
+    expansion, header search routing, incident drill creation, status
+    advancement, threat intel filtering, and alert acknowledgement
+
+  - Maintained dark/light theme with localStorage persistence and ensured
+    full responsive layout compatibility across desktop and mobile viewports
+
+
+4. TECHNOLOGIES / TOOLS USED
+------------------------------
+Frontend Framework:
+  - React 18 with functional components and hooks
+  - TypeScript for type safety across all components and data models
+
+Build Tooling:
+  - Vite (fast build tool and dev server with HMR)
+  - PostCSS and Autoprefixer
+
+Styling:
+  - Tailwind CSS with HSL design tokens and custom theming
+  - shadcn/ui component library (built on Radix UI primitives)
+  - Framer Motion for UI animations
+  - Lucide React for icons
+
+Data Visualization:
+  - Recharts for threat timeline and severity distribution charts
+  - HTML5 Canvas API for the global attack map
+
+Routing and State:
+  - React Router DOM v6 for client-side routing
+  - React Hook Form with Zod for form validation
+  - TanStack React Query for data management patterns
+  - localStorage for session persistence (incidents, alerts, theme)
+
+Testing:
+  - Vitest as the test runner
+  - Testing Library (React) for component testing
+  - Playwright for end-to-end browser verification
+
+Code Quality:
+  - ESLint with TypeScript-ESLint rules
+  - TypeScript strict mode compilation
+
+Backend (Mock/Simulated):
+  - Node.js mock API server (mock-api.mjs) serving mock data on port 3001
+  - Typed mock data layer in src/data/ (siem-data.ts, mitre-data.ts,
+    threat-intel-data.ts)
+  - Mock API adapter in src/lib/sentinel-api.ts as backend integration
+    boundary
+
+
+5. LEARNING OUTCOMES
+----------------------
+Through this project, the following technical and domain-specific skills
+were developed and strengthened:
+
+  a) Cybersecurity Domain Knowledge
+     - Understood how Security Information and Event Management (SIEM)
+       systems work in real SOC environments
+     - Learned the MITRE ATT&CK framework — a globally recognized matrix
+       of adversary tactics and techniques used to categorize cyber threats
+     - Gained knowledge of Indicators of Compromise (IOCs), threat
+       intelligence workflows, and incident response lifecycle stages
+     - Understood log analysis concepts and how analysts search, filter,
+       and triage security events in production systems
+
+  b) Frontend Engineering
+     - Built a complex, multi-page React application with TypeScript from
+       the ground up, managing component hierarchy, state, routing, and
+       performance
+     - Applied advanced React patterns including custom hooks, context,
+       memoization, and controlled simulation for real-time UI
+     - Gained hands-on experience with a professional UI component system
+       (shadcn/ui / Radix) and animation libraries (Framer Motion)
+     - Implemented data visualization using Recharts and raw Canvas API
+       for geographic attack mapping
+
+  c) Software Quality and Testing
+     - Wrote unit tests with Vitest and Testing Library covering core
+       user workflows and component behavior
+     - Used Playwright for automated browser verification across routes
+       and viewports, including mobile responsiveness
+     - Enforced code quality through ESLint, TypeScript strict mode, and
+       CI-like quality checks (lint, test, build, tsc)
+
+  d) System Design and Architecture
+     - Learned to separate concerns between UI, data, and API boundaries
+       so a mock backend can be replaced with a real one without rewriting
+       the frontend
+     - Understood the design considerations for real production SIEM systems
+       including authentication, role-based access control, real-time event
+       streaming (WebSocket/SSE), database persistence, and audit logging
+     - Recognized the importance of maintainable, typed data contracts when
+       building applications that will eventually connect to real backends
+
+  e) Presentation and Communication
+     - Prepared a professional, polished demo-ready application capable of
+       being presented to technical and non-technical stakeholders
+     - Developed the ability to articulate the current scope, limitations,
+       and next engineering milestones of a project clearly and honestly
